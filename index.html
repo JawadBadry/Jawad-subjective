@@ -17,4 +17,17 @@ p{color : red
     <button onclick="window.location.href='https://gemini.google.com/app?utm_source=app_launcher&utm_medium=owned&utm_campaign=base_all'">موقع مساعدي</button>
 </center>    
 </body>
+  <div id="hack-zone">
+    <input type="text" id="userInput" placeholder="اكتب اسمك هنا">
+    <button onclick="displayName()">عرض الاسم</button>
+    <p id="result"></p>
+</div>
+
+<script>
+function displayName() {
+    let name = document.getElementById("userInput").value;
+    // هذي السطر فيه "غلطة" برمجية مقصودة هي اللي بتسمح لنا بالهجوم
+    document.getElementById("result").innerHTML = "أهلاً بك يا " + name;
+}
+</script>
 </html>
